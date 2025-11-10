@@ -245,6 +245,71 @@
             margin-bottom: 20px;
         }
 
+        /* Prevent page breaks inside elements for PDF and print */
+        #markdownContent h1,
+        #markdownContent h2,
+        #markdownContent h3,
+        #markdownContent h4,
+        #markdownContent h5,
+        #markdownContent h6,
+        #markdownContent p,
+        #markdownContent li,
+        #markdownContent blockquote,
+        #markdownContent pre {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        #markdownContent table {
+            page-break-inside: auto;
+        }
+
+        #markdownContent tr {
+            page-break-inside: avoid;
+            break-inside: avoid;
+        }
+
+        /* Print styles */
+        @media print {
+            header {
+                display: none;
+            }
+
+            .content-wrapper {
+                box-shadow: none;
+                padding: 0;
+                background-color: white;
+            }
+
+            #markdownContent {
+                color: black;
+            }
+
+            #markdownContent h1,
+            #markdownContent h2,
+            #markdownContent h3,
+            #markdownContent h4,
+            #markdownContent h5,
+            #markdownContent h6 {
+                page-break-after: avoid;
+                break-after: avoid;
+            }
+
+            #markdownContent h1,
+            #markdownContent h2,
+            #markdownContent h3,
+            #markdownContent h4,
+            #markdownContent h5,
+            #markdownContent h6,
+            #markdownContent p,
+            #markdownContent li,
+            #markdownContent blockquote,
+            #markdownContent pre {
+                page-break-inside: avoid;
+                break-inside: avoid;
+            }
+        }
+
         @media (max-width: 768px) {
             .toolbar {
                 flex-direction: column;
@@ -268,8 +333,8 @@
             <div class="toolbar">
                 <input type="file" id="fileInput" accept=".md,.markdown" />
                 <button class="btn" id="uploadBtn">Upload Markdown File</button>
+                <button class="btn" id="printBtn" disabled>Print</button>
                 <button class="btn" id="exportPdfBtn" disabled>Export to PDF</button>
-                <button class="btn" id="exportDocxBtn" disabled>Export to DOCX</button>
                 <div class="theme-selector">
                     <label for="themeSelect">Theme:</label>
                     <select id="themeSelect">
@@ -298,8 +363,6 @@
     <!-- Include required libraries -->
     <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
     <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
-    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.min.js"></script>
-    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
 
     <script>
         let currentMarkdownContent = '';
@@ -358,9 +421,9 @@
                 fileInfo.textContent = `Loaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
                 fileInfo.style.display = 'block';
 
-                // Enable export buttons
+                // Enable export and print buttons
+                document.getElementById('printBtn').disabled = false;
                 document.getElementById('exportPdfBtn').disabled = false;
-                document.getElementById('exportDocxBtn').disabled = false;
             };
 
             reader.onerror = () => {
@@ -375,15 +438,34 @@
             contentDiv.innerHTML = marked.parse(markdown);
         }
 
-        // PDF Export
+        // Print functionality
+        document.getElementById('printBtn').addEventListener('click', () => {
+            window.print();
+        });
+
+        // PDF Export with page break prevention
         document.getElementById('exportPdfBtn').addEventListener('click', async () => {
             const element = document.getElementById('markdownContent');
             const opt = {
-                margin: 1,
+                margin: 0.5,
                 filename: `${currentFileName || 'document'}.pdf`,
                 image: { type: 'jpeg', quality: 0.98 },
-                html2canvas: { scale: 2 },
-                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+                html2canvas: {
+                    scale: 2,
+                    useCORS: true,
+                    logging: false
+                },
+                jsPDF: {
+                    unit: 'in',
+                    format: 'letter',
+                    orientation: 'portrait'
+                },
+                pagebreak: {
+                    mode: ['avoid-all', 'css', 'legacy'],
+                    before: '.page-break-before',
+                    after: '.page-break-after',
+                    avoid: ['h1', 'h2', 'h3', 'h4', 'h5', 'h6', 'p', 'li', 'blockquote', 'pre', 'tr']
+                }
             };
 
             try {
@@ -391,70 +473,6 @@
             } catch (error) {
                 console.error('PDF export error:', error);
                 alert('Error exporting to PDF. Please try again.');
-            }
-        });
-
-        // DOCX Export
-        document.getElementById('exportDocxBtn').addEventListener('click', async () => {
-            try {
-                const { Document, Paragraph, TextRun, HeadingLevel, Packer } = docx;
-
-                // Parse markdown content into paragraphs
-                const lines = currentMarkdownContent.split('\n');
-                const children = [];
-
-                for (let line of lines) {
-                    if (line.trim() === '') {
-                        children.push(new Paragraph({ text: '' }));
-                        continue;
-                    }
-
-                    // Headers
-                    if (line.startsWith('# ')) {
-                        children.push(new Paragraph({
-                            text: line.substring(2),
-                            heading: HeadingLevel.HEADING_1
-                        }));
-                    } else if (line.startsWith('## ')) {
-                        children.push(new Paragraph({
-                            text: line.substring(3),
-                            heading: HeadingLevel.HEADING_2
-                        }));
-                    } else if (line.startsWith('### ')) {
-                        children.push(new Paragraph({
-                            text: line.substring(4),
-                            heading: HeadingLevel.HEADING_3
-                        }));
-                    } else if (line.startsWith('#### ')) {
-                        children.push(new Paragraph({
-                            text: line.substring(5),
-                            heading: HeadingLevel.HEADING_4
-                        }));
-                    } else {
-                        // Regular text - remove markdown formatting for simplicity
-                        let cleanText = line
-                            .replace(/\*\*(.*?)\*\*/g, '$1')  // Bold
-                            .replace(/\*(.*?)\*/g, '$1')      // Italic
-                            .replace(/`(.*?)`/g, '$1')        // Code
-                            .replace(/\[(.*?)\]\(.*?\)/g, '$1'); // Links
-
-                        children.push(new Paragraph({
-                            children: [new TextRun(cleanText)]
-                        }));
-                    }
-                }
-
-                const doc = new Document({
-                    sections: [{
-                        children: children
-                    }]
-                });
-
-                const blob = await Packer.toBlob(doc);
-                saveAs(blob, `${currentFileName || 'document'}.docx`);
-            } catch (error) {
-                console.error('DOCX export error:', error);
-                alert('Error exporting to DOCX. Please try again.');
             }
         });
 
