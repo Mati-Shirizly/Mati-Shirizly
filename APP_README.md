@@ -1,4 +1,4 @@
-# Markdown Reader - iOS Standalone App
+# MDview.app - iOS Standalone App
 
 A beautiful, lightweight web-based markdown document reader that works as a standalone iOS app.
 
@@ -22,11 +22,11 @@ A beautiful, lightweight web-based markdown document reader that works as a stan
 ### Step 2: Add to Home Screen
 1. Tap the **Share** button (square with arrow pointing up) at the bottom of Safari
 2. Scroll down and tap **"Add to Home Screen"**
-3. You'll see the app icon and name "MD Reader"
+3. You'll see the app icon and name "MDview.app"
 4. Tap **"Add"** in the top right
 
 ### Step 3: Launch the App
-1. Find the "MD Reader" icon on your home screen
+1. Find the "MDview.app" icon on your home screen with a blue gradient icon showing a markdown document
 2. Tap to launch - it will open in standalone mode (no Safari UI)
 3. The app will now work like a native iOS app!
 
