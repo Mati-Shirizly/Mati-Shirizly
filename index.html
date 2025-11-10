@@ -1,0 +1,496 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Markdown Document Reader</title>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        :root {
+            --bg-primary: #ffffff;
+            --bg-secondary: #f5f5f5;
+            --text-primary: #333333;
+            --text-secondary: #666666;
+            --border-color: #dddddd;
+            --button-bg: #007bff;
+            --button-hover: #0056b3;
+            --button-text: #ffffff;
+        }
+
+        [data-theme="dark"] {
+            --bg-primary: #1e1e1e;
+            --bg-secondary: #2d2d2d;
+            --text-primary: #e0e0e0;
+            --text-secondary: #a0a0a0;
+            --border-color: #404040;
+            --button-bg: #0d6efd;
+            --button-hover: #0b5ed7;
+            --button-text: #ffffff;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            transition: background-color 0.3s, color 0.3s;
+            min-height: 100vh;
+        }
+
+        .container {
+            max-width: 1200px;
+            margin: 0 auto;
+            padding: 20px;
+        }
+
+        header {
+            background-color: var(--bg-secondary);
+            padding: 20px;
+            border-bottom: 2px solid var(--border-color);
+            margin-bottom: 30px;
+        }
+
+        h1 {
+            font-size: 28px;
+            margin-bottom: 20px;
+        }
+
+        .toolbar {
+            display: flex;
+            flex-wrap: wrap;
+            gap: 15px;
+            align-items: center;
+        }
+
+        .btn {
+            padding: 10px 20px;
+            background-color: var(--button-bg);
+            color: var(--button-text);
+            border: none;
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+            transition: background-color 0.3s;
+        }
+
+        .btn:hover {
+            background-color: var(--button-hover);
+        }
+
+        .btn:disabled {
+            opacity: 0.5;
+            cursor: not-allowed;
+        }
+
+        .theme-selector {
+            display: flex;
+            gap: 10px;
+            align-items: center;
+        }
+
+        .theme-selector label {
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .theme-selector select {
+            padding: 8px 12px;
+            background-color: var(--bg-primary);
+            color: var(--text-primary);
+            border: 1px solid var(--border-color);
+            border-radius: 5px;
+            cursor: pointer;
+            font-size: 14px;
+        }
+
+        #fileInput {
+            display: none;
+        }
+
+        .file-info {
+            margin-top: 15px;
+            padding: 10px;
+            background-color: var(--bg-secondary);
+            border-radius: 5px;
+            font-size: 14px;
+            color: var(--text-secondary);
+        }
+
+        .content-wrapper {
+            background-color: var(--bg-secondary);
+            border-radius: 8px;
+            padding: 40px;
+            min-height: 400px;
+            box-shadow: 0 2px 8px rgba(0, 0, 0, 0.1);
+        }
+
+        #markdownContent {
+            line-height: 1.6;
+        }
+
+        #markdownContent h1,
+        #markdownContent h2,
+        #markdownContent h3,
+        #markdownContent h4,
+        #markdownContent h5,
+        #markdownContent h6 {
+            margin-top: 24px;
+            margin-bottom: 16px;
+            font-weight: 600;
+        }
+
+        #markdownContent h1 {
+            font-size: 2em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 8px;
+        }
+
+        #markdownContent h2 {
+            font-size: 1.5em;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 6px;
+        }
+
+        #markdownContent h3 {
+            font-size: 1.25em;
+        }
+
+        #markdownContent p {
+            margin-bottom: 16px;
+        }
+
+        #markdownContent ul,
+        #markdownContent ol {
+            margin-bottom: 16px;
+            padding-left: 30px;
+        }
+
+        #markdownContent li {
+            margin-bottom: 8px;
+        }
+
+        #markdownContent code {
+            background-color: var(--bg-primary);
+            padding: 2px 6px;
+            border-radius: 3px;
+            font-family: 'Courier New', Courier, monospace;
+            font-size: 0.9em;
+        }
+
+        #markdownContent pre {
+            background-color: var(--bg-primary);
+            padding: 16px;
+            border-radius: 5px;
+            overflow-x: auto;
+            margin-bottom: 16px;
+        }
+
+        #markdownContent pre code {
+            background-color: transparent;
+            padding: 0;
+        }
+
+        #markdownContent blockquote {
+            border-left: 4px solid var(--border-color);
+            padding-left: 16px;
+            margin-bottom: 16px;
+            color: var(--text-secondary);
+        }
+
+        #markdownContent a {
+            color: var(--button-bg);
+            text-decoration: none;
+        }
+
+        #markdownContent a:hover {
+            text-decoration: underline;
+        }
+
+        #markdownContent table {
+            border-collapse: collapse;
+            width: 100%;
+            margin-bottom: 16px;
+        }
+
+        #markdownContent table th,
+        #markdownContent table td {
+            border: 1px solid var(--border-color);
+            padding: 8px 12px;
+            text-align: left;
+        }
+
+        #markdownContent table th {
+            background-color: var(--bg-primary);
+            font-weight: 600;
+        }
+
+        #markdownContent img {
+            max-width: 100%;
+            height: auto;
+            margin-bottom: 16px;
+        }
+
+        .placeholder {
+            text-align: center;
+            color: var(--text-secondary);
+            padding: 60px 20px;
+        }
+
+        .placeholder-icon {
+            font-size: 64px;
+            margin-bottom: 20px;
+        }
+
+        @media (max-width: 768px) {
+            .toolbar {
+                flex-direction: column;
+                align-items: stretch;
+            }
+
+            .btn {
+                width: 100%;
+            }
+
+            .content-wrapper {
+                padding: 20px;
+            }
+        }
+    </style>
+</head>
+<body>
+    <header>
+        <div class="container">
+            <h1>Markdown Document Reader</h1>
+            <div class="toolbar">
+                <input type="file" id="fileInput" accept=".md,.markdown" />
+                <button class="btn" id="uploadBtn">Upload Markdown File</button>
+                <button class="btn" id="exportPdfBtn" disabled>Export to PDF</button>
+                <button class="btn" id="exportDocxBtn" disabled>Export to DOCX</button>
+                <div class="theme-selector">
+                    <label for="themeSelect">Theme:</label>
+                    <select id="themeSelect">
+                        <option value="light">Light</option>
+                        <option value="dark">Dark</option>
+                        <option value="system">System</option>
+                    </select>
+                </div>
+            </div>
+            <div id="fileInfo" class="file-info" style="display: none;"></div>
+        </div>
+    </header>
+
+    <div class="container">
+        <div class="content-wrapper">
+            <div id="markdownContent">
+                <div class="placeholder">
+                    <div class="placeholder-icon">📄</div>
+                    <h2>No document loaded</h2>
+                    <p>Click "Upload Markdown File" to get started</p>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- Include required libraries -->
+    <script src="https://cdn.jsdelivr.net/npm/marked@11.1.1/marked.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/html2pdf.js/0.10.1/html2pdf.bundle.min.js"></script>
+    <script src="https://cdn.jsdelivr.net/npm/docx@8.5.0/build/index.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/FileSaver.js/2.0.5/FileSaver.min.js"></script>
+
+    <script>
+        let currentMarkdownContent = '';
+        let currentFileName = '';
+
+        // Theme management
+        function initTheme() {
+            const savedTheme = localStorage.getItem('theme') || 'system';
+            document.getElementById('themeSelect').value = savedTheme;
+            applyTheme(savedTheme);
+        }
+
+        function applyTheme(theme) {
+            if (theme === 'system') {
+                const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
+                document.documentElement.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+            } else {
+                document.documentElement.setAttribute('data-theme', theme);
+            }
+            localStorage.setItem('theme', theme);
+        }
+
+        document.getElementById('themeSelect').addEventListener('change', (e) => {
+            applyTheme(e.target.value);
+        });
+
+        // Listen for system theme changes
+        window.matchMedia('(prefers-color-scheme: dark)').addEventListener('change', (e) => {
+            if (document.getElementById('themeSelect').value === 'system') {
+                applyTheme('system');
+            }
+        });
+
+        // File upload handling
+        document.getElementById('uploadBtn').addEventListener('click', () => {
+            document.getElementById('fileInput').click();
+        });
+
+        document.getElementById('fileInput').addEventListener('change', (e) => {
+            const file = e.target.files[0];
+            if (file) {
+                readMarkdownFile(file);
+            }
+        });
+
+        function readMarkdownFile(file) {
+            const reader = new FileReader();
+
+            reader.onload = (e) => {
+                currentMarkdownContent = e.target.result;
+                currentFileName = file.name.replace(/\.[^/.]+$/, ''); // Remove extension
+                renderMarkdown(currentMarkdownContent);
+
+                // Show file info
+                const fileInfo = document.getElementById('fileInfo');
+                fileInfo.textContent = `Loaded: ${file.name} (${(file.size / 1024).toFixed(2)} KB)`;
+                fileInfo.style.display = 'block';
+
+                // Enable export buttons
+                document.getElementById('exportPdfBtn').disabled = false;
+                document.getElementById('exportDocxBtn').disabled = false;
+            };
+
+            reader.onerror = () => {
+                alert('Error reading file. Please try again.');
+            };
+
+            reader.readAsText(file);
+        }
+
+        function renderMarkdown(markdown) {
+            const contentDiv = document.getElementById('markdownContent');
+            contentDiv.innerHTML = marked.parse(markdown);
+        }
+
+        // PDF Export
+        document.getElementById('exportPdfBtn').addEventListener('click', async () => {
+            const element = document.getElementById('markdownContent');
+            const opt = {
+                margin: 1,
+                filename: `${currentFileName || 'document'}.pdf`,
+                image: { type: 'jpeg', quality: 0.98 },
+                html2canvas: { scale: 2 },
+                jsPDF: { unit: 'in', format: 'letter', orientation: 'portrait' }
+            };
+
+            try {
+                await html2pdf().set(opt).from(element).save();
+            } catch (error) {
+                console.error('PDF export error:', error);
+                alert('Error exporting to PDF. Please try again.');
+            }
+        });
+
+        // DOCX Export
+        document.getElementById('exportDocxBtn').addEventListener('click', async () => {
+            try {
+                const { Document, Paragraph, TextRun, HeadingLevel, Packer } = docx;
+
+                // Parse markdown content into paragraphs
+                const lines = currentMarkdownContent.split('\n');
+                const children = [];
+
+                for (let line of lines) {
+                    if (line.trim() === '') {
+                        children.push(new Paragraph({ text: '' }));
+                        continue;
+                    }
+
+                    // Headers
+                    if (line.startsWith('# ')) {
+                        children.push(new Paragraph({
+                            text: line.substring(2),
+                            heading: HeadingLevel.HEADING_1
+                        }));
+                    } else if (line.startsWith('## ')) {
+                        children.push(new Paragraph({
+                            text: line.substring(3),
+                            heading: HeadingLevel.HEADING_2
+                        }));
+                    } else if (line.startsWith('### ')) {
+                        children.push(new Paragraph({
+                            text: line.substring(4),
+                            heading: HeadingLevel.HEADING_3
+                        }));
+                    } else if (line.startsWith('#### ')) {
+                        children.push(new Paragraph({
+                            text: line.substring(5),
+                            heading: HeadingLevel.HEADING_4
+                        }));
+                    } else {
+                        // Regular text - remove markdown formatting for simplicity
+                        let cleanText = line
+                            .replace(/\*\*(.*?)\*\*/g, '$1')  // Bold
+                            .replace(/\*(.*?)\*/g, '$1')      // Italic
+                            .replace(/`(.*?)`/g, '$1')        // Code
+                            .replace(/\[(.*?)\]\(.*?\)/g, '$1'); // Links
+
+                        children.push(new Paragraph({
+                            children: [new TextRun(cleanText)]
+                        }));
+                    }
+                }
+
+                const doc = new Document({
+                    sections: [{
+                        children: children
+                    }]
+                });
+
+                const blob = await Packer.toBlob(doc);
+                saveAs(blob, `${currentFileName || 'document'}.docx`);
+            } catch (error) {
+                console.error('DOCX export error:', error);
+                alert('Error exporting to DOCX. Please try again.');
+            }
+        });
+
+        // Drag and drop support
+        const contentWrapper = document.querySelector('.content-wrapper');
+
+        ['dragenter', 'dragover', 'dragleave', 'drop'].forEach(eventName => {
+            contentWrapper.addEventListener(eventName, preventDefaults, false);
+        });
+
+        function preventDefaults(e) {
+            e.preventDefault();
+            e.stopPropagation();
+        }
+
+        ['dragenter', 'dragover'].forEach(eventName => {
+            contentWrapper.addEventListener(eventName, () => {
+                contentWrapper.style.border = '2px dashed var(--button-bg)';
+            });
+        });
+
+        ['dragleave', 'drop'].forEach(eventName => {
+            contentWrapper.addEventListener(eventName, () => {
+                contentWrapper.style.border = 'none';
+            });
+        });
+
+        contentWrapper.addEventListener('drop', (e) => {
+            const files = e.dataTransfer.files;
+            if (files.length > 0 && (files[0].name.endsWith('.md') || files[0].name.endsWith('.markdown'))) {
+                readMarkdownFile(files[0]);
+            }
+        });
+
+        // Initialize theme on page load
+        initTheme();
+    </script>
+</body>
+</html>
