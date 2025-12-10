@@ -1,0 +1,602 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Medical Device MVP Workflow Diagrams</title>
+    <script src="https://cdn.jsdelivr.net/npm/mermaid@10/dist/mermaid.min.js"></script>
+    <style>
+        * {
+            margin: 0;
+            padding: 0;
+            box-sizing: border-box;
+        }
+
+        body {
+            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Roboto, Oxygen, Ubuntu, Cantarell, sans-serif;
+            padding: 40px;
+            background: white;
+            color: #2d3436;
+        }
+
+        h1 {
+            color: #667eea;
+            margin-bottom: 10px;
+            font-size: 2.5em;
+            text-align: center;
+        }
+
+        h2 {
+            color: #667eea;
+            margin-top: 60px;
+            margin-bottom: 20px;
+            padding-bottom: 10px;
+            border-bottom: 3px solid #667eea;
+            font-size: 1.8em;
+            page-break-before: always;
+        }
+
+        h2:first-of-type {
+            margin-top: 40px;
+        }
+
+        .subtitle {
+            text-align: center;
+            color: #636e72;
+            margin-bottom: 50px;
+            font-size: 1.2em;
+        }
+
+        .diagram-container {
+            margin: 30px 0;
+            padding: 20px;
+            background: #f8f9fa;
+            border-radius: 10px;
+            display: flex;
+            justify-content: center;
+            page-break-inside: avoid;
+        }
+
+        .mermaid {
+            background: white;
+            padding: 20px;
+            border-radius: 8px;
+        }
+
+        .description {
+            margin: 20px 0;
+            padding: 15px;
+            background: #e3f2fd;
+            border-left: 4px solid #667eea;
+            border-radius: 5px;
+            line-height: 1.6;
+        }
+
+        @media print {
+            body {
+                padding: 20px;
+            }
+
+            h2 {
+                page-break-before: always;
+                page-break-after: avoid;
+            }
+
+            .diagram-container {
+                page-break-inside: avoid;
+            }
+        }
+
+        @page {
+            size: A4 landscape;
+            margin: 20mm;
+        }
+    </style>
+</head>
+<body>
+    <h1>Medical Device MVP Development</h1>
+    <p class="subtitle">Workflow Diagrams - Ultrasound Probe + Mobile App + Dashboard System</p>
+
+    <h2>1. Overview Timeline (Gantt Chart)</h2>
+    <div class="description">
+        This Gantt chart shows the complete timeline for all 6 development phases, illustrating parallel workstreams and dependencies. The project spans approximately 16 weeks from foundation to integration.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+gantt
+    title Medical Device MVP Development Timeline
+    dateFormat YYYY-MM-DD
+    section Phase 1: Foundation
+    Regulatory Strategy           :p1a, 2025-01-01, 3w
+    Requirements Definition       :p1b, 2025-01-01, 3w
+    Risk Management              :p1c, 2025-01-01, 3w
+    Architecture Design          :p1d, 2025-01-01, 3w
+
+    section Phase 2: Hardware
+    Proof of Concept            :p2a, 2025-01-22, 3w
+    Electronic Design           :p2b, 2025-02-12, 3w
+    Firmware Development        :p2c, 2025-02-12, 4w
+    Mechanical Design           :p2d, 2025-03-05, 2w
+    Initial Testing             :p2e, 2025-03-19, 2w
+
+    section Phase 3: Mobile App
+    Setup & Foundation          :p3a, 2025-01-22, 2w
+    Core Features Sprint 1      :p3b, 2025-02-05, 2w
+    Core Features Sprint 2      :p3c, 2025-02-19, 2w
+    Integration                 :p3d, 2025-03-05, 2w
+    Security Implementation     :p3e, 2025-03-19, 1w
+    Testing                     :p3f, 2025-03-26, 1w
+
+    section Phase 4: Dashboard
+    Setup & Foundation          :p4a, 2025-02-05, 2w
+    Core Features Sprint 1      :p4b, 2025-02-19, 2w
+    Core Features Sprint 2      :p4c, 2025-03-05, 2w
+    Analytics & Reporting       :p4d, 2025-03-19, 2w
+    Integration                 :p4e, 2025-04-02, 1w
+    Testing                     :p4f, 2025-04-09, 1w
+
+    section Phase 5: Backend
+    Backend Development         :p5a, 2025-01-22, 3w
+    Security Implementation     :p5b, 2025-02-12, 2w
+    Compliance Infrastructure   :p5c, 2025-02-26, 2w
+    DevOps & Monitoring        :p5d, 2025-03-12, 2w
+
+    section Phase 6: Integration
+    System Integration          :p6a, 2025-04-02, 2w
+    Clinical Validation         :p6b, 2025-04-16, 2w
+    Regulatory Testing          :p6c, 2025-04-16, 2w
+    Security Audit              :p6d, 2025-04-30, 1w
+    Documentation               :p6e, 2025-04-30, 1w
+        </div>
+    </div>
+
+    <h2>2. System Architecture Flow</h2>
+    <div class="description">
+        High-level system architecture showing the four main layers (Hardware, Mobile, Backend, Dashboard) and cloud infrastructure. Arrows indicate data flow and communication protocols between components.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart TB
+    subgraph Hardware["Hardware Layer"]
+        US[Ultrasound Probe]
+        UT[Ultrasound Transducer]
+        SP[Signal Processor]
+        FW[Firmware]
+
+        UT --> SP
+        SP --> FW
+        FW --> US
+    end
+
+    subgraph Mobile["Mobile Application Layer"]
+        MA[Mobile App]
+        RT[Real-time Display]
+        PM[Patient Management]
+        IM[Image Storage]
+        MS[Measurements]
+
+        MA --> RT
+        MA --> PM
+        MA --> IM
+        MA --> MS
+    end
+
+    subgraph Backend["Backend Layer"]
+        API[REST API]
+        AUTH[Authentication]
+        DB[(Database)]
+        FS[File Storage]
+        WS[WebSocket Server]
+
+        API --> DB
+        API --> FS
+        AUTH --> API
+        WS --> API
+    end
+
+    subgraph Dashboard["Dashboard Layer"]
+        DA[Dashboard App]
+        DM[Device Management]
+        AN[Analytics]
+        RV[Report Viewer]
+        UM[User Management]
+
+        DA --> DM
+        DA --> AN
+        DA --> RV
+        DA --> UM
+    end
+
+    subgraph Cloud["Cloud Infrastructure"]
+        CDN[CDN]
+        LB[Load Balancer]
+        MON[Monitoring]
+        LOG[Logging]
+    end
+
+    US -->|USB-C/BLE| MA
+    MA -->|HTTPS| API
+    DA -->|HTTPS| API
+    API --> LB
+    LB --> MON
+    LB --> LOG
+    FS --> CDN
+
+    style Hardware fill:#e1f5ff
+    style Mobile fill:#fff4e1
+    style Backend fill:#e8f5e9
+    style Dashboard fill:#f3e5f5
+    style Cloud fill:#fce4ec
+        </div>
+    </div>
+
+    <h2>3. Phase Dependencies</h2>
+    <div class="description">
+        Visual representation of dependencies between development phases. Phase 1 (Foundation) is a prerequisite for all other phases. Phase 5 (Backend) must be established before mobile and dashboard development can proceed to integration.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart LR
+    P1[Phase 1:<br/>Foundation &<br/>Planning]
+    P2[Phase 2:<br/>Hardware<br/>Development]
+    P3[Phase 3:<br/>Mobile App<br/>Development]
+    P4[Phase 4:<br/>Dashboard<br/>Development]
+    P5[Phase 5:<br/>Backend &<br/>Infrastructure]
+    P6[Phase 6:<br/>Integration &<br/>Validation]
+
+    P1 --> P2
+    P1 --> P3
+    P1 --> P4
+    P1 --> P5
+    P2 --> P6
+    P3 --> P6
+    P4 --> P6
+    P5 --> P3
+    P5 --> P4
+    P5 --> P6
+
+    style P1 fill:#ff6b6b
+    style P2 fill:#4ecdc4
+    style P3 fill:#45b7d1
+    style P4 fill:#96ceb4
+    style P5 fill:#ffeaa7
+    style P6 fill:#dfe6e9
+        </div>
+    </div>
+
+    <h2>4. Development Workflow Process</h2>
+    <div class="description">
+        End-to-end development workflow from project initiation through regulatory approval and market launch. Shows parallel development streams and the iterative nature of regulatory submission.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart TD
+    START([Start MVP Development])
+
+    REQ[Define Requirements<br/>& Specifications]
+    REG[Regulatory Strategy<br/>& Planning]
+    ARCH[System Architecture<br/>Design]
+    RISK[Risk Management<br/>Plan]
+
+    START --> REQ
+    START --> REG
+    REQ --> ARCH
+    REG --> ARCH
+    ARCH --> RISK
+
+    subgraph Parallel["Parallel Development Streams"]
+        HW[Hardware Development]
+        MOB[Mobile Development]
+        DASH[Dashboard Development]
+        BE[Backend Development]
+    end
+
+    RISK --> Parallel
+
+    HW --> PROTO[Hardware Prototype]
+    MOB --> ALPHA_M[Mobile Alpha]
+    DASH --> ALPHA_D[Dashboard Alpha]
+    BE --> API_V1[API v1]
+
+    PROTO --> INT
+    ALPHA_M --> INT
+    ALPHA_D --> INT
+    API_V1 --> INT
+
+    INT[System Integration<br/>Testing]
+
+    INT --> VAL[Clinical Validation]
+    INT --> SEC[Security Audit]
+    INT --> REG_TEST[Regulatory Testing]
+
+    VAL --> DOC
+    SEC --> DOC
+    REG_TEST --> DOC
+
+    DOC[Documentation<br/>Completion]
+
+    DOC --> SUB[Regulatory<br/>Submission]
+    SUB --> DECISION{Approval?}
+
+    DECISION -->|Yes| LAUNCH[MVP Launch]
+    DECISION -->|No| REVISE[Revisions Required]
+    REVISE --> INT
+
+    LAUNCH --> END([Production Ready])
+
+    style START fill:#95e1d3
+    style END fill:#95e1d3
+    style DECISION fill:#f38181
+    style LAUNCH fill:#aa96da
+        </div>
+    </div>
+
+    <h2>5. Data Flow Diagram</h2>
+    <div class="description">
+        Detailed data flow showing how patient data, images, and device metadata move through the system from clinician interactions to cloud storage and dashboard viewing.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart LR
+    subgraph User["User Interactions"]
+        CLI[Clinician]
+        ADM[Admin]
+        PAT[Patient Data]
+    end
+
+    subgraph Device["Ultrasound Probe"]
+        IMG[Raw Image Data]
+        META[Device Metadata]
+    end
+
+    subgraph Mobile["Mobile App"]
+        PROC[Image Processing]
+        MEAS[Measurements]
+        ANNOT[Annotations]
+        LOC_DB[(Local Storage)]
+    end
+
+    subgraph Cloud["Cloud Backend"]
+        API_GW[API Gateway]
+        AUTH_SVC[Auth Service]
+        IMG_SVC[Image Service]
+        PAT_SVC[Patient Service]
+        DEV_SVC[Device Service]
+        S3[(Object Storage)]
+        DB[(PostgreSQL)]
+    end
+
+    subgraph Dashboard["Web Dashboard"]
+        VIEWER[Image Viewer]
+        REPORTS[Reports]
+        ANALYTICS[Analytics]
+        ADMIN[Admin Panel]
+    end
+
+    CLI -->|Scans Patient| Device
+    Device -->|USB-C/BLE| Mobile
+    IMG --> PROC
+    META --> LOC_DB
+    PROC --> MEAS
+    MEAS --> ANNOT
+
+    Mobile -->|HTTPS/REST| API_GW
+    API_GW --> AUTH_SVC
+    API_GW --> IMG_SVC
+    API_GW --> PAT_SVC
+    API_GW --> DEV_SVC
+
+    IMG_SVC --> S3
+    PAT_SVC --> DB
+    DEV_SVC --> DB
+    PAT --> PAT_SVC
+
+    Dashboard -->|HTTPS/REST| API_GW
+    S3 --> VIEWER
+    DB --> REPORTS
+    DB --> ANALYTICS
+    ADM --> ADMIN
+
+    style User fill:#ffe66d
+    style Device fill:#4ecdc4
+    style Mobile fill:#45b7d1
+    style Cloud fill:#96ceb4
+    style Dashboard fill:#ff6b6b
+        </div>
+    </div>
+
+    <h2>6. Risk Management Flow</h2>
+    <div class="description">
+        ISO 14971 compliant risk management process showing continuous identification, analysis, evaluation, control implementation, and monitoring of risks throughout the product lifecycle.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart TD
+    IDENTIFY[Identify Hazards]
+
+    IDENTIFY --> ANALYZE[Analyze Risks]
+    ANALYZE --> EVAL[Evaluate Risk Level]
+
+    EVAL --> DECISION{Acceptable?}
+
+    DECISION -->|Yes| MONITOR[Monitor Risk]
+    DECISION -->|No| CONTROL[Implement Controls]
+
+    CONTROL --> VERIFY[Verify Effectiveness]
+    VERIFY --> REEVAL[Re-evaluate Risk]
+
+    REEVAL --> DECISION
+
+    MONITOR --> REVIEW[Periodic Review]
+    REVIEW --> UPDATE{Changes?}
+
+    UPDATE -->|Yes| IDENTIFY
+    UPDATE -->|No| MONITOR
+
+    subgraph Controls["Risk Controls"]
+        DESIGN[Design Controls]
+        PROC[Process Controls]
+        INFO[Information/Training]
+        SOFT[Software Safeguards]
+    end
+
+    CONTROL -.-> Controls
+
+    style DECISION fill:#f38181
+    style UPDATE fill:#f38181
+    style MONITOR fill:#95e1d3
+        </div>
+    </div>
+
+    <h2>7. Testing & Validation Pyramid</h2>
+    <div class="description">
+        Hierarchical testing approach from unit tests at the base through integration and system testing to clinical validation at the apex. Each level builds upon the previous to ensure comprehensive quality assurance.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart BT
+    subgraph L1["Unit Tests"]
+        UT1[Hardware Unit Tests]
+        UT2[Software Unit Tests]
+        UT3[Firmware Unit Tests]
+    end
+
+    subgraph L2["Integration Tests"]
+        IT1[Hardware-Software Integration]
+        IT2[API Integration]
+        IT3[Component Integration]
+    end
+
+    subgraph L3["System Tests"]
+        ST1[End-to-End Testing]
+        ST2[Performance Testing]
+        ST3[Security Testing]
+    end
+
+    subgraph L4["Validation"]
+        VAL1[Clinical Validation]
+        VAL2[Usability Testing]
+        VAL3[Regulatory Testing]
+    end
+
+    L1 --> L2
+    L2 --> L3
+    L3 --> L4
+
+    style L1 fill:#e8f5e9
+    style L2 fill:#fff9c4
+    style L3 fill:#ffe0b2
+    style L4 fill:#f8bbd0
+        </div>
+    </div>
+
+    <h2>8. Regulatory Pathway</h2>
+    <div class="description">
+        Decision tree for regulatory clearance showing FDA pathways (510(k), PMA) and CE marking routes based on device classification. Includes review cycles and approval decision points.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+flowchart TD
+    START([Project Initiation])
+
+    START --> CLASS[Determine Device<br/>Classification]
+
+    CLASS --> PATH{Select Pathway}
+
+    PATH -->|US| FDA[FDA Pathway]
+    PATH -->|EU| CE[CE Marking]
+    PATH -->|Other| OTHER[Other Regions]
+
+    FDA --> FDA_CLASS{Classification}
+    FDA_CLASS -->|Class I| FDA_C1[General Controls]
+    FDA_CLASS -->|Class II| FDA_510K[510k Submission]
+    FDA_CLASS -->|Class III| FDA_PMA[PMA Submission]
+
+    CE --> CE_CLASS{Classification}
+    CE_CLASS -->|Class I| CE_C1[Self Declaration]
+    CE_CLASS -->|Class IIa/IIb| CE_NB[Notified Body Review]
+    CE_CLASS -->|Class III| CE_C3[Full Assessment]
+
+    FDA_C1 --> FDA_REG[FDA Registration]
+    FDA_510K --> FDA_REV[FDA Review]
+    FDA_PMA --> FDA_REV
+
+    CE_C1 --> CE_DOC[Technical Documentation]
+    CE_NB --> CE_DOC
+    CE_C3 --> CE_DOC
+
+    FDA_REV --> FDA_DEC{Decision}
+    FDA_DEC -->|Approved| MARKET_US[US Market Launch]
+    FDA_DEC -->|More Info| FDA_RESP[Respond to Questions]
+    FDA_DEC -->|Not Approved| FDA_APPEAL[Appeal/Revise]
+
+    FDA_RESP --> FDA_REV
+    FDA_APPEAL --> FDA_510K
+
+    CE_DOC --> CE_AUDIT[Notified Body Audit]
+    CE_AUDIT --> CE_DEC{Decision}
+    CE_DEC -->|Approved| CERT[CE Certificate]
+    CE_DEC -->|CAR| CE_CAR[Corrective Actions]
+
+    CE_CAR --> CE_AUDIT
+    CERT --> MARKET_EU[EU Market Launch]
+
+    style START fill:#95e1d3
+    style MARKET_US fill:#aa96da
+    style MARKET_EU fill:#aa96da
+    style FDA_DEC fill:#f38181
+    style CE_DEC fill:#f38181
+        </div>
+    </div>
+
+    <h2>9. Sprint Structure (Agile)</h2>
+    <div class="description">
+        Two-week Agile sprint cycle showing parallel workstreams for design, development, testing, and documentation. Includes sprint planning, review, and retrospective ceremonies.
+    </div>
+    <div class="diagram-container">
+        <div class="mermaid">
+gantt
+    title 2-Week Sprint Cycle
+    dateFormat YYYY-MM-DD
+
+    section Sprint Planning
+    Sprint Planning Meeting    :milestone, m1, 2025-01-06, 0d
+
+    section Development
+    Design & Architecture      :d1, 2025-01-06, 2d
+    Implementation            :d2, after d1, 6d
+    Code Review               :d3, after d2, 1d
+
+    section Testing
+    Unit Testing              :t1, 2025-01-08, 5d
+    Integration Testing       :t2, after d2, 2d
+
+    section Documentation
+    Technical Docs            :doc1, 2025-01-13, 2d
+
+    section Sprint Close
+    Sprint Review             :milestone, m2, 2025-01-17, 0d
+    Sprint Retrospective      :milestone, m3, 2025-01-17, 0d
+
+    section Next Sprint
+    Sprint Planning           :milestone, m4, 2025-01-20, 0d
+        </div>
+    </div>
+
+    <script>
+        mermaid.initialize({
+            startOnLoad: true,
+            theme: 'default',
+            flowchart: {
+                useMaxWidth: true,
+                htmlLabels: true,
+                curve: 'basis'
+            },
+            gantt: {
+                useMaxWidth: true,
+                fontSize: 11
+            }
+        });
+    </script>
+</body>
+</html>
