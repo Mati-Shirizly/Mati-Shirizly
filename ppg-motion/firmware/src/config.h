@@ -42,15 +42,18 @@ constexpr size_t NUM_SENSORS = sizeof(SENSOR_SLOTS) / sizeof(SENSOR_SLOTS[0]);
 // ---------------------------------------------------------------------------
 // MAX30105 acquisition settings (shared by all sensors)
 // ---------------------------------------------------------------------------
-// LED_MODE: 1 = red only, 2 = red + IR, 3 = red + IR + green
-constexpr uint8_t LED_MODE = 3;
+// Works with MAX30102 (red + IR) and MAX30105 (red + IR + green). Both chips
+// report the same part ID, so the firmware cannot tell them apart: pick here.
+// LED_MODE: 1 = red only, 2 = red + IR (MAX30102 / MAX30105),
+//           3 = red + IR + green (MAX30105 only; a MAX30102 has no green LED)
+constexpr uint8_t LED_MODE = 2;
 // Internal ADC sample rate: 50, 100, 200, 400, 800, 1000, 1600, 3200
 constexpr int SAMPLE_RATE = 200;
 // On-chip averaging: 1, 2, 4, 8, 16, 32. Output rate = SAMPLE_RATE / SAMPLE_AVG
 constexpr uint8_t SAMPLE_AVG = 1;
 // LED pulse width in us -> ADC resolution: 69 (15 bit), 118 (16), 215 (17), 411 (18)
-// With 3 LEDs active, long pulse widths limit the max sample rate. Check the
-// datasheet table; 411 us @ 200 Hz and 215 us @ 400 Hz are safe starting points.
+// Long pulse widths limit the max sample rate (datasheet table). With red + IR,
+// 411 us works up to 400 Hz; with 3 LEDs keep 411 us at <= 200 Hz.
 constexpr int PULSE_WIDTH_US = 411;
 // ADC full scale in nA: 2048, 4096, 8192, 16384
 constexpr int ADC_RANGE = 16384;
@@ -59,7 +62,7 @@ constexpr int ADC_RANGE = 16384;
 // Adjust at runtime with the "led" command so DC sits at ~50-80% of full scale.
 constexpr uint8_t LED_RED_AMP = 0x1F;
 constexpr uint8_t LED_IR_AMP = 0x1F;
-constexpr uint8_t LED_GREEN_AMP = 0x1F;
+constexpr uint8_t LED_GREEN_AMP = 0x1F;  // ignored unless LED_MODE == 3
 
 // Start streaming immediately after boot (otherwise wait for "start")
 constexpr bool AUTOSTART = true;

@@ -1,7 +1,8 @@
-// ESP32 + MAX30105: raw red / IR / green streamer for PPG-based motion sensing.
+// ESP32 + MAX30102 / MAX30105: raw red / IR [/ green] streamer for PPG-based
+// motion sensing.
 //
 // Output (CSV over USB serial, lines starting with '#' are status/comments):
-//   sensor,seq,t_us,red,ir,green
+//   sensor,seq,t_us,red[,ir[,green]]   (channels depend on LED_MODE)
 //     sensor : index into SENSOR_SLOTS
 //     seq    : per-sensor sample counter. Gaps = samples lost (FIFO overflow).
 //              Use seq / OUTPUT_RATE_HZ as the authoritative time base.
@@ -10,7 +11,8 @@
 // Commands (newline terminated):
 //   start | stop                 start / stop streaming
 //   info                         print configuration and sensor status
-//   led <s|*> <red> <ir> <green> set LED currents 0..255 for sensor s or all
+//   led <s|*> <red> [ir] [green] set LED currents 0..255 for sensor s or all
+//                                (omitted values keep their current setting)
 //   temp                         print die temperature of each sensor
 //   reset                        re-initialise all sensors
 
@@ -29,6 +31,8 @@ constexpr bool slotsValid(size_t i = 0) {
 static_assert(slotsValid(), "SENSOR_SLOTS: bus must be 0/1, muxChannel -1..7");
 static_assert(LED_MODE >= 1 && LED_MODE <= 3, "LED_MODE must be 1, 2 or 3");
 
+constexpr const char *CHANNELS = LED_MODE == 1 ? "red" : LED_MODE == 2 ? "red,ir" : "red,ir,green";
+
 constexpr float OUTPUT_RATE_HZ = float(SAMPLE_RATE) / SAMPLE_AVG;
 constexpr uint32_t SAMPLE_PERIOD_US = uint32_t(1e6f / OUTPUT_RATE_HZ);
 
@@ -38,6 +42,7 @@ struct SensorState {
   uint32_t seq = 0;
   uint32_t lostTotal = 0;
   uint32_t lastReadUs = 0;
+  uint8_t amp[3] = {LED_RED_AMP, LED_IR_AMP, LED_GREEN_AMP};  // red, IR, green
 };
 
 static SensorState sensors[NUM_SENSORS];
@@ -78,20 +83,23 @@ static void initSensors() {
     s.seq = 0;
     s.lostTotal = 0;
     s.lastReadUs = micros();
+    s.amp[0] = LED_RED_AMP;
+    s.amp[1] = LED_IR_AMP;
+    s.amp[2] = LED_GREEN_AMP;
     Serial.printf("# sensor %u bus=%u mux=%d : %s\n", unsigned(i), SENSOR_SLOTS[i].bus,
                   SENSOR_SLOTS[i].muxChannel, s.ok ? "OK" : "NOT FOUND / CONFIG FAILED");
   }
 }
 
 static void printInfo() {
-  Serial.printf("# ppg-motion firmware | sensors=%u led_mode=%u sr=%d avg=%u pw=%dus "
+  Serial.printf("# ppg-motion firmware | sensors=%u leds=%s sr=%d avg=%u pw=%dus "
                 "range=%dnA out_rate=%.1fHz streaming=%d\n",
-                unsigned(NUM_SENSORS), LED_MODE, SAMPLE_RATE, SAMPLE_AVG, PULSE_WIDTH_US,
+                unsigned(NUM_SENSORS), CHANNELS, SAMPLE_RATE, SAMPLE_AVG, PULSE_WIDTH_US,
                 ADC_RANGE, OUTPUT_RATE_HZ, streaming);
   for (size_t i = 0; i < NUM_SENSORS; ++i)
     Serial.printf("# sensor %u ok=%d seq=%lu lost=%lu\n", unsigned(i), sensors[i].ok,
                   (unsigned long)sensors[i].seq, (unsigned long)sensors[i].lostTotal);
-  Serial.println("# columns: sensor,seq,t_us,red,ir,green");
+  Serial.printf("# columns: sensor,seq,t_us,%s\n", CHANNELS);
 }
 
 // ---------------------------------------------------------------------------
@@ -103,7 +111,7 @@ static void handleCommand(char *line) {
 
   if (!strcmp(cmd, "start")) {
     streaming = true;
-    Serial.println("# columns: sensor,seq,t_us,red,ir,green");
+    Serial.printf("# columns: sensor,seq,t_us,%s\n", CHANNELS);
   } else if (!strcmp(cmd, "stop")) {
     streaming = false;
     Serial.println("# stopped");
@@ -118,21 +126,24 @@ static void handleCommand(char *line) {
     }
   } else if (!strcmp(cmd, "led")) {
     char *who = strtok(nullptr, " \t");
-    char *r = strtok(nullptr, " \t");
-    char *ir = strtok(nullptr, " \t");
-    char *g = strtok(nullptr, " \t");
-    if (!who || !r || !ir || !g) {
-      Serial.println("# usage: led <sensor|*> <red> <ir> <green>  (0..255)");
+    char *vals[3] = {strtok(nullptr, " \t"), strtok(nullptr, " \t"), strtok(nullptr, " \t")};
+    if (!who || !vals[0]) {
+      Serial.println("# usage: led <sensor|*> <red> [ir] [green]  (0..255)");
       return;
     }
     bool all = !strcmp(who, "*");
     long idx = all ? -1 : strtol(who, nullptr, 10);
-    uint8_t vr = constrain(atoi(r), 0, 255), vir = constrain(atoi(ir), 0, 255),
-            vg = constrain(atoi(g), 0, 255);
     for (size_t i = 0; i < NUM_SENSORS; ++i) {
-      if (!(all || long(i) == idx) || !sensors[i].ok || !selectSlot(i)) continue;
-      sensors[i].dev.setLedAmplitudes(vr, vir, vg);
-      Serial.printf("# led sensor=%u red=%u ir=%u green=%u\n", unsigned(i), vr, vir, vg);
+      SensorState &s = sensors[i];
+      if (!(all || long(i) == idx) || !s.ok || !selectSlot(i)) continue;
+      for (int c = 0; c < 3; ++c)
+        if (vals[c]) s.amp[c] = constrain(atoi(vals[c]), 0, 255);
+      s.dev.setLedAmplitudes(s.amp[0], s.amp[1], s.amp[2]);
+      if (LED_MODE == 3)
+        Serial.printf("# led sensor=%u red=%u ir=%u green=%u\n", unsigned(i), s.amp[0], s.amp[1],
+                      s.amp[2]);
+      else
+        Serial.printf("# led sensor=%u red=%u ir=%u\n", unsigned(i), s.amp[0], s.amp[1]);
     }
   } else {
     Serial.printf("# unknown command '%s' (start|stop|info|led|temp|reset)\n", cmd);
@@ -192,9 +203,13 @@ static void drainSensor(size_t i) {
   size_t pos = 0;
   for (uint8_t k = 0; k < n; ++k) {
     uint32_t t = tRead - uint32_t(n - 1 - k) * SAMPLE_PERIOD_US;
-    pos += snprintf(out + pos, sizeof(out) - pos, "%u,%lu,%lu,%lu,%lu,%lu\n", unsigned(i),
-                    (unsigned long)s.seq++, (unsigned long)t, (unsigned long)samples[k].red,
-                    (unsigned long)samples[k].ir, (unsigned long)samples[k].green);
+    pos += snprintf(out + pos, sizeof(out) - pos, "%u,%lu,%lu,%lu", unsigned(i),
+                    (unsigned long)s.seq++, (unsigned long)t, (unsigned long)samples[k].red);
+    if (LED_MODE >= 2)
+      pos += snprintf(out + pos, sizeof(out) - pos, ",%lu", (unsigned long)samples[k].ir);
+    if (LED_MODE >= 3)
+      pos += snprintf(out + pos, sizeof(out) - pos, ",%lu", (unsigned long)samples[k].green);
+    out[pos++] = '\n';
   }
   Serial.write(reinterpret_cast<const uint8_t *>(out), pos);
 }

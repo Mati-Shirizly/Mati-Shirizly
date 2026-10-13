@@ -2,7 +2,8 @@
 #include <Arduino.h>
 #include <Wire.h>
 
-// Minimal register-level MAX30105 driver focused on lossless raw streaming.
+// Minimal register-level driver for MAX30102 / MAX30105 (same register map,
+// the MAX30102 just has no green LED), focused on lossless raw streaming.
 // Unlike the SparkFun library it drains the whole 32-sample hardware FIFO in
 // one burst and reports how many samples the chip dropped (overflow counter).
 class Max30105 {
@@ -14,11 +15,11 @@ class Max30105 {
   struct Sample {
     uint32_t red;
     uint32_t ir;
-    uint32_t green;
+    uint32_t green;  // 0 unless 3 LEDs are active
   };
 
   struct Settings {
-    uint8_t ledMode;      // 1 = red, 2 = red+IR, 3 = red+IR+green
+    uint8_t ledMode;      // 1 = red, 2 = red+IR, 3 = red+IR+green (MAX30105 only)
     int sampleRate;       // Hz: 50..3200
     uint8_t sampleAvg;    // 1..32
     int pulseWidthUs;     // 69, 118, 215, 411
@@ -30,7 +31,8 @@ class Max30105 {
   bool begin(TwoWire &wire);
   // Soft-resets the chip and applies the settings. Returns false on bad settings.
   bool configure(const Settings &s);
-  void setLedAmplitudes(uint8_t red, uint8_t ir, uint8_t green);
+  // `green` is only written when 3 LEDs are active (no LED3 on a MAX30102).
+  void setLedAmplitudes(uint8_t red, uint8_t ir, uint8_t green = 0);
   void shutdown(bool off);
   float readTemperatureC();
 

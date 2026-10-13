@@ -23,6 +23,8 @@ constexpr uint8_t REG_PART_ID = 0xFF;
 
 constexpr uint8_t MODE_SHDN = 0x80;
 constexpr uint8_t MODE_RESET = 0x40;
+constexpr uint8_t MODE_RED_ONLY = 0x02;  // "heart rate" mode: LED1 (red)
+constexpr uint8_t MODE_RED_IR = 0x03;    // "SpO2" mode: LED1 (red) + LED2 (IR)
 constexpr uint8_t MODE_MULTI_LED = 0x07;
 constexpr uint8_t FIFO_ROLLOVER_EN = 0x10;
 
@@ -67,16 +69,19 @@ bool Max30105::configure(const Settings &s) {
   // FIFO: averaging + rollover so the newest data is kept; OVF counts losses.
   write8(REG_FIFO_CONFIG, (avg << 5) | FIFO_ROLLOVER_EN);
   write8(REG_PARTICLE_CONFIG, (range << 5) | (rate << 2) | pw);
+  activeLeds_ = s.ledMode;
   setLedAmplitudes(s.redAmp, s.irAmp, s.greenAmp);
 
-  // Multi-LED mode with explicit time slots keeps the FIFO order fixed:
-  // red, IR, green (only the first `ledMode` slots are enabled).
-  activeLeds_ = s.ledMode;
-  uint8_t slot2 = s.ledMode >= 2 ? SLOT_IR : 0;
-  uint8_t slot3 = s.ledMode >= 3 ? SLOT_GREEN : 0;
-  write8(REG_MULTI_LED_1, (slot2 << 4) | SLOT_RED);
-  write8(REG_MULTI_LED_2, slot3);
-  write8(REG_MODE_CONFIG, MODE_MULTI_LED);
+  // FIFO order is always red, IR[, green]. Red-only and red+IR use the
+  // standard modes that MAX30102 and MAX30105 share; green needs multi-LED
+  // mode with explicit time slots (MAX30105 only).
+  if (s.ledMode == 3) {
+    write8(REG_MULTI_LED_1, (SLOT_IR << 4) | SLOT_RED);
+    write8(REG_MULTI_LED_2, SLOT_GREEN);
+    write8(REG_MODE_CONFIG, MODE_MULTI_LED);
+  } else {
+    write8(REG_MODE_CONFIG, s.ledMode == 2 ? MODE_RED_IR : MODE_RED_ONLY);
+  }
 
   // Start with an empty FIFO.
   write8(REG_FIFO_WR_PTR, 0);
@@ -87,7 +92,7 @@ bool Max30105::configure(const Settings &s) {
 void Max30105::setLedAmplitudes(uint8_t red, uint8_t ir, uint8_t green) {
   write8(REG_LED1_PA, red);
   write8(REG_LED2_PA, ir);
-  write8(REG_LED3_PA, green);
+  if (activeLeds_ == 3) write8(REG_LED3_PA, green);
 }
 
 void Max30105::shutdown(bool off) {
